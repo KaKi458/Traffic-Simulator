@@ -10,12 +10,6 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-    <parent>
-		<groupId>org.springframework.boot</groupId>
-		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>2.7.4</version>
-		<relativePath/> <!-- lookup parent from repository -->
-	</parent>
 	<groupId>com.trafficsimulator</groupId>
 	<artifactId>traffic-simulator</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
@@ -23,22 +17,8 @@
 	<description>Project for simulating traffic on the road</description>
 	<properties>
 		<java.version>17</java.version>
+		<maven.compiler.source>17</maven.compiler.source>
+		<maven.compiler.target>17</maven.compiler.target>
 	</properties>
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-maven-plugin</artifactId>
-				<configuration>
-					<excludes>
-						<exclude>
-							<groupId>org.projectlombok</groupId>
-							<artifactId>lombok</artifactId>
-						</exclude>
-					</excludes>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
 
 </project>
