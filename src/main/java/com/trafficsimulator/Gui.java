@@ -8,7 +8,7 @@ import java.io.IOException;
 
 public class Gui extends JPanel  {
     
-    private final Simulator simulator;
+    private final TrafficSimulatorApp simulator;
     private JButton lanesNoIncButton, lanesNoDecButton;
     private JButton randomizeButton, pauseButton;
     private JRadioButton noneButton;
@@ -21,7 +21,7 @@ public class Gui extends JPanel  {
     
     private JPanel upperPanel, middlePanel, lowerPanel;
 
-    Gui(Simulator simulator) {
+    public Gui(TrafficSimulatorApp simulator) {
         
         super();
         

@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class Simulator extends JFrame {
+public class TrafficSimulatorApp extends JFrame {
 
     private final Canvas canvas;
     private final Gui gui;
@@ -28,7 +28,7 @@ public class Simulator extends JFrame {
     private Car carInfo = null;
     private final Random random;
 
-    public Simulator() {
+    public TrafficSimulatorApp() {
 
         setTitle("Simulator");
         setSize(WIDTH, HEIGHT);
@@ -61,8 +61,7 @@ public class Simulator extends JFrame {
         add(visualisation);
         add(gui);
         pack();
-        setVisible(true);
-        
+
         simulation = new Simulation(this);
         setDefault();
         simulation.start();
@@ -138,7 +137,7 @@ public class Simulator extends JFrame {
         
         for(int i = cars.size() - 1; i >= 0; i-- ) {
             Car car = cars.get(i);
-            if(car.getX() > Simulator.WIDTH + 500 || car.isToRemove()) {
+            if(car.getX() > TrafficSimulatorApp.WIDTH + 500 || car.isToRemove()) {
                 cars.remove(car);
             }
         } 
@@ -240,7 +239,7 @@ public class Simulator extends JFrame {
     public static void main(String[] args) {
 
         EventQueue.invokeLater(
-                () -> new Simulator().setVisible(true));
+                () -> new TrafficSimulatorApp().setVisible(true));
     }
 
     public void clickCar(Point clickedPoint, MouseEvent e) {

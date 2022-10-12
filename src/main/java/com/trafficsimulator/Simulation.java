@@ -7,7 +7,7 @@ import java.util.Random;
 
 public class Simulation implements Runnable{
 
-    private final Simulator simulator;
+    private final TrafficSimulatorApp simulator;
     
     private boolean isRun = false; 
     private boolean isPaused = false;
@@ -52,7 +52,7 @@ public class Simulation implements Runnable{
 
     private final List<Car> cars;
     
-    public Simulation(Simulator simulator) {
+    public Simulation(TrafficSimulatorApp simulator) {
         
         this.simulator = simulator;
         this.cars = simulator.getCars();
