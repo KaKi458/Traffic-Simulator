@@ -1,0 +1,66 @@
+FUNCTION_BLOCK acceleration
+
+VAR_INPUT		
+        speed : REAL;		
+        speedDifference : REAL;
+        distance  : REAL;
+END_VAR
+
+VAR_OUTPUT				 //Define output variable
+        acceleration : REAL;
+END_VAR
+
+FUZZIFY speed   
+        TERM slow := (0,1) (60, 0);
+        TERM medium := (30,0) (70, 1) (120, 0);
+        TERM fast := (70, 0) (120, 1);
+END_FUZZIFY
+
+FUZZIFY speedDifference   
+        TERM veryNegative := (-40, 1) (-14, 0);
+        TERM negative := (-35, 0) (-18, 1)(-5, 0); 
+        TERM good := (-14, 0) (0, 1) (14, 0);
+        TERM positive := (0, 0) (14, 1) (30, 1);
+END_FUZZIFY
+
+FUZZIFY distance
+	TERM short := (-0.1, 1) (0, 0);
+        TERM good := (-0.05, 0) (0, 1) (0.08, 0);
+	TERM long := (0, 0) (0.15, 1);
+END_FUZZIFY
+
+
+DEFUZZIFY acceleration			
+        TERM veryNegative := (-6, 1) (-4, 0);
+        TERM negative := (-4, 0) (-2, 1) (-0.5, 0);
+        TERM zero := (-0.5, 0) (0, 1) (0.5, 0);
+        TERM positive := (0.5, 0) (1, 1) (1.5, 0);
+        TERM veryPositive := (1.5, 0) (2, 1);
+        METHOD : COG;		 //Use 'Center Of Gravity' defuzzification method
+        DEFAULT := 0;		 //Default value is 0 (if no rule activates defuzzifier)
+END_DEFUZZIFY
+
+RULEBLOCK No1
+        AND : MIN;			 //Use 'min' for 'and' (also implicit use 'max' for 'or' to fulfill DeMorgan's Law)
+        ACT : MIN;			 //Use 'min' activation method
+        ACCU : MAX;			 //Use 'max' accumulation method
+
+                                                                                    RULE 1 :  IF distance IS short AND speedDifference IS veryNegative THEN acceleration IS veryNegative;        
+                                                                                    RULE 2 :  IF distance IS short AND speedDifference IS negative     THEN acceleration IS veryNegative;
+                                                                                    RULE 3 :  IF distance IS short AND speedDifference IS good         THEN acceleration IS negative;
+                                                                                    RULE 4 :  IF distance IS short AND speedDifference IS positive     THEN acceleration IS zero;
+                                                                                    RULE 5 :  IF distance IS good  AND speedDifference IS veryNegative THEN acceleration IS negative;
+                                                                                    RULE 6 :  IF distance IS good  AND speedDifference IS negative     THEN acceleration IS zero;
+                                                                                    RULE 7 :  IF distance IS good  AND speedDifference IS good         THEN acceleration IS positive;
+                                                                                    RULE 8 :  IF distance IS good  AND speedDifference IS positive     THEN acceleration IS positive;
+                                                                                    RULE 9 :  IF distance IS long  AND speedDifference IS veryNegative AND speed IS fast   THEN acceleration IS veryNegative;
+                                                                                    RULE 10 : IF distance IS long  AND speedDifference IS veryNegative AND speed IS medium THEN acceleration IS negative;        
+                                                                                    RULE 11 : IF distance IS long  AND speedDifference IS veryNegative AND speed IS slow   THEN acceleration IS zero;         
+                                                                                    RULE 12 : IF distance IS long  AND speedDifference IS negative     THEN acceleration IS zero;
+                                                                                    RULE 13 : IF distance IS long  AND speedDifference IS good         THEN acceleration IS positive;
+                                                                                    RULE 14 : IF distance IS long  AND speedDifference IS positive     THEN acceleration IS veryPositive;
+
+END_RULEBLOCK
+
+END_FUNCTION_BLOCK
+
