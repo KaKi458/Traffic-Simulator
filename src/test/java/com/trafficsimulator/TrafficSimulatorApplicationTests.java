@@ -4,8 +4,6 @@ import org.testng.annotations.Test;
 
 class TrafficSimulatorApplicationTests {
 
-	@Test
-	void contextLoads() {
-	}
-
+  @Test
+  void contextLoads() {}
 }
