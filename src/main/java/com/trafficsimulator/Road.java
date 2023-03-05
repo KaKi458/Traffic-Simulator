@@ -13,27 +13,26 @@ public class Road {
   private final int length;
   private final Map<Integer, Image> speedLimitsImages = new HashMap<>();
   private final List<RoadLane> lanes;
-  private int noOfLanes;
+  private final List<Car> cars;
   private int maxSpeed;
   private int secondMaxSpeed = 0;
   private int secondSpeedLimitX = 1200;
   private Image secondSpeedLimitImg;
   private int secondSpeedLimitImgX = secondSpeedLimitX;
-  private List<Car> cars;
   private Obstacle obstacle = null;
-  private TrafficLights trafficLights = null;
+
 
   private boolean isCrossroad = false;
   private int destinationPercentage;
   private RoadLane extraLane = null;
 
-  public Road(int x, int y, int length, int maxSpeed, int noOfLanes) {
+  public Road(int x, int y, int length, int maxSpeed, int noOfLanes, List<Car> cars) {
 
     xStart = x;
     this.y = y;
     this.length = length;
     this.maxSpeed = maxSpeed;
-    this.noOfLanes = noOfLanes;
+    this.cars = cars;
 
     lanes = new ArrayList<>();
     for (int i = 0; i < noOfLanes; i++) {
@@ -48,6 +47,8 @@ public class Road {
       throw new RuntimeException(e);
     }
   }
+
+  
 
   public void render(Graphics g) {
 
@@ -68,29 +69,17 @@ public class Road {
 
     if (isCrossroad) {
       g2d.setColor(Color.BLACK);
-      g2d.fillRect(1200, lanes.get(noOfLanes / 2 - 1).getY(), 600, 3);
+      g2d.fillRect(1200, lanes.get(lanes.size() / 2 - 1).getY(), 600, 3);
     }
 
     if (secondMaxSpeed != 0) {
       g2d.drawImage(
-          secondSpeedLimitImg, secondSpeedLimitImgX, lanes.get(noOfLanes - 1).getY() - 50, null);
+          secondSpeedLimitImg, secondSpeedLimitImgX, lanes.get(lanes.size() - 1).getY() - 50, null);
     }
 
     if (obstacle != null) {
       obstacle.render(g);
     }
-  }
-
-  public void setCars(List<Car> cars) {
-    this.cars = cars;
-  }
-
-  public TrafficLights getTrafficLights() {
-    return trafficLights;
-  }
-
-  public void setTrafficLights(TrafficLights tL) {
-    this.trafficLights = tL;
   }
 
   public int getXStart() {
@@ -243,19 +232,17 @@ public class Road {
   }
 
   public int getNoOfLanes() {
-    return noOfLanes;
+    return lanes.size();
   }
 
   public void incrementNoOfLanes() {
 
-    int laneXStart = lanes.get(noOfLanes - 1).getXStart() - RoadLane.WIDTH;
-    int laneY = lanes.get(noOfLanes - 1).getY() - RoadLane.WIDTH;
-    lanes.add(new RoadLane(laneXStart, laneY, length, noOfLanes));
-    noOfLanes++;
-
+    int laneXStart = lanes.get(lanes.size() - 1).getXStart() - RoadLane.WIDTH;
+    int laneY = lanes.get(lanes.size() - 1).getY() - RoadLane.WIDTH;
+    lanes.add(new RoadLane(laneXStart, laneY, length, lanes.size()));
     if (isCrossroad) {
       for (RoadLane lane : lanes) {
-        if (lane.getNumber() > noOfLanes / 2 - 1) lane.setSide(-1);
+        if (lane.getNumber() > lanes.size() / 2 - 1) lane.setSide(-1);
         else lane.setSide(1);
       }
     }
@@ -264,31 +251,29 @@ public class Road {
   public void decrementNoOfLanes() {
 
     for (Car car : cars) {
-      if (car.getLane() == lanes.get(noOfLanes - 1)) {
+      if (car.getLane() == lanes.get(lanes.size() - 1)) {
         car.setToRemove();
       }
     }
-    if (obstacle != null && obstacle.getLane() == lanes.get(noOfLanes - 1)) obstacle = null;
-    lanes.remove(noOfLanes - 1);
-    noOfLanes--;
-
+    if (obstacle != null && obstacle.getLane() == lanes.get(lanes.size() - 1)) obstacle = null;
+    lanes.remove(lanes.size() - 1);
     if (isCrossroad) {
       for (RoadLane lane : lanes) {
-        if (lane.getNumber() > noOfLanes / 2 - 1) lane.setSide(-1);
+        if (lane.getNumber() > lanes.size() / 2 - 1) lane.setSide(-1);
         else lane.setSide(1);
       }
     }
   }
 
-  public void addObstacle() {
-
-    obstacle = new Obstacle(this);
-    for (Car car : cars) {
-      if (car.getLane() == obstacle.getLane()) {
-        car.setToRemove();
-      }
-    }
-  }
+//  public void addObstacle() {
+//
+//    obstacle = new Obstacle(this);
+//    for (Car car : cars) {
+//      if (car.getLane() == obstacle.getLane()) {
+//        car.setToRemove();
+//      }
+//    }
+//  }
 
   public void removeObstacle() {
     obstacle = null;
@@ -299,11 +284,11 @@ public class Road {
     if (car == null) return obstacle;
 
     if (car.getDestination() == 1) {
-      if (car.getLaneNumber() > noOfLanes / 2 - 1) {
+      if (car.getLaneNumber() > lanes.size() / 2 - 1) {
         return new Obstacle(car.getLane(), 1170);
       } else return null;
     } else if (car.getDestination() == -1) {
-      if (car.getLaneNumber() <= noOfLanes / 2 - 1) {
+      if (car.getLaneNumber() <= lanes.size() / 2 - 1) {
         return new Obstacle(car.getLane(), 1120);
       } else return null;
     } else return obstacle;
@@ -315,14 +300,14 @@ public class Road {
     obstacle = new Obstacle(extraLane);
   }
 
-  public void removeExtraLane() {
-
-    extraLane = null;
-    obstacle = null;
-    for (Car car : cars) {
-      if (car.getLaneNumber() == -1) car.setToRemove();
-    }
-  }
+//  public void removeExtraLane() {
+//
+//    extraLane = null;
+//    obstacle = null;
+//    for (Car car : cars) {
+//      if (car.getLaneNumber() == -1) car.setToRemove();
+//    }
+//  }
 
   public boolean isExtraLane() {
     return extraLane != null;
@@ -361,29 +346,29 @@ public class Road {
     return isCrossroad;
   }
 
-  public void setCrossroad(boolean w) {
-
-    isCrossroad = w;
-    if (w) {
-      destinationPercentage = 50;
-      obstacle = null;
-      for (RoadLane lane : lanes) {
-        if (lane.getNumber() > noOfLanes / 2 - 1) lane.setSide(-1);
-        else lane.setSide(1);
-      }
-      for (Car car : cars) {
-        if (car.getX() < 800) car.setDestination(destinationPercentage);
-      }
-    } else {
-      for (Car car : cars) {
-        car.clearDestination();
-      }
-
-      for (RoadLane lane : lanes) {
-        lane.setSide(0);
-      }
-    }
-  }
+//  public void setCrossroad(boolean w) {
+//
+//    isCrossroad = w;
+//    if (w) {
+//      destinationPercentage = 50;
+//      obstacle = null;
+//      for (RoadLane lane : lanes) {
+//        if (lane.getNumber() > lanes.size() / 2 - 1) lane.setSide(-1);
+//        else lane.setSide(1);
+//      }
+//      for (Car car : cars) {
+//        if (car.getX() < 800) car.setDestination(destinationPercentage);
+//      }
+//    } else {
+//      for (Car car : cars) {
+//        car.clearDestination();
+//      }
+//
+//      for (RoadLane lane : lanes) {
+//        lane.setSide(0);
+//      }
+//    }
+//  }
 
   public void changeDestinationPercentage(int percentage) {
     destinationPercentage = percentage;

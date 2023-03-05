@@ -1,10 +1,14 @@
 package com.trafficsimulator;
 
+import java.awt.*;
+import java.awt.image.BufferStrategy;
 import java.text.DecimalFormat;
+import java.util.*;
 import java.util.List;
-import java.util.Random;
 
-public class Simulation implements Runnable {
+import static com.trafficsimulator.TrafficSimulatorApp.WIDTH;
+
+public class Simulation {
 
   static final int fps = 60;
   static final double oneSecondPeriod = 1000 * 1000000;
@@ -15,10 +19,14 @@ public class Simulation implements Runnable {
   static final int initialNoOfCars = 50;
   static final int initialNoOfLanes = 4;
   static final int initialMaxSpeed = 100;
-  private final TrafficSimulatorApp simulator;
   private final int[] counts;
   private final int[] extraCounts;
   private final List<Car> cars;
+  private final Road road;
+  private final Random random;
+  private final FuzzyModel fuzzyModel;
+  private TrafficLights trafficLights;
+  private Car carInfo = null;
   private boolean isRun = false;
   private boolean isPaused = false;
   private boolean isExtraLane = false;
@@ -39,14 +47,15 @@ public class Simulation implements Runnable {
   private int extraCounter = 0;
   private int second = 0;
   private int inflowPurpose;
-  private boolean isCarAdded = false;
   private int carAddingCounter = 0;
 
-  public Simulation(TrafficSimulatorApp simulator) {
-
-    this.simulator = simulator;
-    this.cars = simulator.getCars();
-
+  public Simulation() {
+    
+    cars = new ArrayList<>();
+    road = new Road(0, 200, WIDTH, initialMaxSpeed, initialNoOfLanes, cars);
+    random = new Random();
+    fuzzyModel = new FuzzyModel();
+    initCars();
     counts = new int[12];
     extraCounts = new int[12];
     for (int i = 0; i < 12; i++) {
@@ -55,113 +64,80 @@ public class Simulation implements Runnable {
     }
   }
 
-  @Override
-  public void run() {
+  private class KinematicsTask extends TimerTask {
+    @Override
+    public void run() {
+      computeKinematics();
 
-    long dt;
-    double displayDelta = 0;
-    double carsInflowDelta = 0;
-    double extraCarsInflowDelta = 0;
-    double otherDelta = 0;
-    double realInflowDelta = 0;
-
-    lastTime = System.nanoTime();
-
-    while (isRun) {
-
-      if (!isPaused) {
-        now = System.nanoTime();
-        dt = now - lastTime;
-
-        displayDelta += dt / displayPeriod;
-        double otherPeriod = 300 * 1000000;
-        otherDelta += dt / otherPeriod;
-        carsInflowDelta += dt / carsInflowPeriod;
-
-        if (isExtraLane && extraCarsInflowPeriod != 0)
-          extraCarsInflowDelta += dt / extraCarsInflowPeriod;
-
-        realInflowDelta += dt / oneSecondPeriod;
-
-        lastTime = now;
-
-        if (displayDelta >= 1) {
-
-          simulator.render();
-          computeKinematics();
-
-          if (isRandomize) updateCarsInflow();
-
-          displayDelta--;
-        }
-
-        if (otherDelta >= 1) {
-
-          changeLanes();
-          simulator.removeCars();
-          checkTrafficLights();
-          checkCollision();
-          countNoOfCars();
-
-          if (simulator.getTrafficLights() != null)
-            simulator.getTrafficLights().lightChange(otherPeriod / 1000000);
-
-          otherDelta--;
-        }
-
-        if (carsInflowDelta >= 1) {
-
-          addCar();
-          carsInflowDelta--;
-        }
-
-        if (extraCarsInflowDelta >= 1) {
-
-          simulator.addExtraCar();
-          extraCarsInflowDelta--;
-        }
-
-        if (realInflowDelta >= 1) {
-
-          countRealCarsInflow();
-
-          if (isExtraLane) countRealExtraCarsInflow();
-
-          second++;
-          if (second > 11) second = 0;
-
-          if (isRandomize && (second == 4 || second == 8)) {
-            randomize();
-          }
-
-          realInflowDelta--;
-        }
-      } else simulator.render();
-    }
-    stop();
-  }
-
-  public synchronized void start() {
-
-    if (isRun) return;
-    isRun = true;
-    thread = new Thread(this);
-    thread.start();
-  }
-
-  public synchronized void stop() {
-
-    if (!isRun) return;
-    isRun = false;
-    try {
-      thread.join();
-    } catch (InterruptedException e) {
-      e.printStackTrace();
     }
   }
 
-  private void computeKinematics() {
+  private class DriversTask extends TimerTask {
+    @Override
+    public void run() {
+      changeLanes();
+      checkTrafficLights();
+    }
+  }
 
+  private class CarsInflowTask extends TimerTask {
+    @Override
+    public void run() {
+      addCar();
+    }
+  }
+
+  private class CleanTask extends TimerTask {
+    @Override
+    public  void run() {
+      removeCars();
+      checkCollision();
+    }
+  }
+
+  private class TrafficLightsTask extends TimerTask {
+    @Override
+    public void run() {
+      changeLight();
+    }
+  }
+
+  private class MeasurementTask extends TimerTask {
+    @Override
+    public void run() {
+      measure();
+    }
+  }
+
+  private void measure() {
+  }
+
+
+  private void changeLight() {
+  }
+
+
+  public void addTrafficLights() {
+    trafficLights = new TrafficLights(1200, 10, 10, road);
+  }
+
+  public void setDefault() {
+    trafficLights = null;
+    //road.removeExtraLane();
+    setExtraLane(false);
+    //road.setCrossroad(false);
+    road.setSecondSpeedLimit(0);
+    road.removeObstacle();
+  }
+
+  public void start() {
+    new Timer().schedule(new KinematicsTask(), 0, 16);
+    new Timer().schedule(new DriversTask(), 0, 40);
+    new Timer().schedule(new CleanTask(),0, 100);
+    new Timer().schedule(new CarsInflowTask(), 0, 100);
+  }
+
+  private synchronized void computeKinematics() {
     for (Car car : cars) {
       car.accelerate();
       car.correct();
@@ -172,41 +148,24 @@ public class Simulation implements Runnable {
     }
   }
 
-  private void changeLanes() {
-
+  private synchronized void changeLanes() {
     for (Car car : cars) {
       car.changeLane();
       car.decideZipperMerge(cars);
     }
   }
 
-  private void checkTrafficLights() {
-
-    for (Car car : cars) {
-      car.lookTrafficLights();
-    }
+  private synchronized void checkTrafficLights() {
+//    for (Car car : cars) {
+//      car.lookTrafficLights();
+//    }
   }
 
-  private void checkCollision() {
-    Collision.checkCollisions(cars, simulator.getRoad().getObstacle(null));
-  }
-
-  private void addCar() {
-
-    if (!isCarAdded) {
-      isCarAdded = simulator.addCar();
-    }
-
-    carAddingCounter++;
-
-    if (carAddingCounter == 4) {
-      carAddingCounter = 0;
-      isCarAdded = false;
-    }
+  private synchronized void checkCollision() {
+    Collision.checkCollisions(cars, road.getObstacle(null));
   }
 
   private void countNoOfCars() {
-
     noOfCars = 0;
     int sumOfSpeed = 0;
     for (Car car : cars) {
@@ -218,15 +177,15 @@ public class Simulation implements Runnable {
     if (noOfCars != 0) averageSpeed = sumOfSpeed / noOfCars;
     else averageSpeed = 0;
 
-    if (simulator.getRoad().isSecondSpeedLimit()) {
+    if (road.isSecondSpeedLimit()) {
 
       int sum1 = 0, sum2 = 0;
       int n1 = 0, n2 = 0;
       for (Car car : cars) {
-        if (car.getX() > 0 && car.getX() < simulator.getRoad().getSecondSpeedLimitX()) {
+        if (car.getX() > 0 && car.getX() < road.getSecondSpeedLimitX()) {
           n1++;
           sum1 += car.getSpeed();
-        } else if (car.getX() > simulator.getRoad().getSecondSpeedLimitX() && car.getX() < 1800) {
+        } else if (car.getX() > road.getSecondSpeedLimitX() && car.getX() < 1800) {
           n2++;
           sum2 += car.getSpeed();
         }
@@ -240,13 +199,11 @@ public class Simulation implements Runnable {
   }
 
   private void countRealCarsInflow() {
-
     realCarsInflow = 5 * (counter - counts[second]);
     counts[second] = counter;
   }
 
   private void countRealExtraCarsInflow() {
-
     realExtraCarsInflow = 5 * (extraCounter - extraCounts[second]);
     extraCounts[second] = extraCounter;
   }
@@ -366,8 +323,65 @@ public class Simulation implements Runnable {
     if (carsInflow != inflowPurpose) {
       if (carsInflow < inflowPurpose) carsInflow++;
       else carsInflow--;
-
-      simulator.updateGui(carsInflow);
     }
+  }
+
+  private void initCars() {
+
+    int space =
+            (road.getLength() - Simulation.initialNoOfCars * Car.LENGTH) / Simulation.initialNoOfCars;
+    for (int i = 0; i < Simulation.initialNoOfCars; i++) {
+      int lane = random.nextInt(road.getNoOfLanes());
+      cars.add(
+              new Car(
+                      road,
+                      lane,
+                      road.getXStart() + i * (Car.LENGTH + space),
+                      0.7 * road.getMaxSpeed(0),
+                      fuzzyModel));
+    }
+  }
+
+  public void addCar() {
+
+    for (int i = 0; i < 4; i++) {
+      int lane = random.nextInt(road.getNoOfLanes());
+      Car first = road.getFirstOnLane(road.getLane(lane));
+      if (first == null || first.getX() > 50) {
+        synchronized (this) {
+          cars.add(new Car(road, lane, fuzzyModel));
+        }
+        incrementCounter();
+        break;
+      }
+    }
+  }
+
+  public void addExtraCar() {
+
+    Car first = road.getFirstOnLane(road.getLane(-1));
+    if (first == null || first.getX() > 30) {
+      cars.add(new Car(road, -1, -Car.LENGTH, 45, fuzzyModel));
+      incrementExtraCounter();
+    }
+  }
+
+  public synchronized void removeCars() {
+    cars.removeIf(car -> car.getX() > WIDTH + 500 || car.isToRemove());
+  }
+
+  public synchronized void render(Graphics2D g2d) {
+    road.render(g2d);
+    if (road.isExtraLane()) {
+      g2d.setColor(Color.BLACK);
+      g2d.fillRect(road.getXStart(), road.getY() + RoadLane.WIDTH, 1200, 3);
+    }
+    synchronized (this) {
+      for (Car car : cars) {
+        car.render(g2d);
+      }
+    }
+
+    if (trafficLights != null) trafficLights.render(g2d);
   }
 }

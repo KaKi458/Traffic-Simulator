@@ -153,19 +153,19 @@ public class Car {
       }
     }
 
-    if (road.getTrafficLights() != null && trafficLight != null) {
-
-      double tLX = road.getTrafficLights().getX();
-      if ((neighbourFront != null && neighbourFront.getX() > tLX)
-          || (neighbourFront == null && tLX > x)) {
-
-        if (trafficLight == Color.RED) {
-
-          distance = (tLX - (x + 2 * LENGTH)) / Simulation.pixelsPerMeter;
-          speedDifference = -speed;
-        }
-      }
-    }
+//    if (road.getTrafficLights() != null && trafficLight != null) {
+//
+//      double tLX = road.getTrafficLights().getX();
+//      if ((neighbourFront != null && neighbourFront.getX() > tLX)
+//          || (neighbourFront == null && tLX > x)) {
+//
+//        if (trafficLight == Color.RED) {
+//
+//          distance = (tLX - (x + 2 * LENGTH)) / Simulation.pixelsPerMeter;
+//          speedDifference = -speed;
+//        }
+//      }
+//    }
 
     double distanceRatio = 0;
     if (speed > 0) {
@@ -205,31 +205,31 @@ public class Car {
       if (speed <= 10) isBrake = false;
     }
 
-    if (road.getTrafficLights() != null && trafficLight != null) {
-
-      double tLDistance = (road.getTrafficLights().getX() - x) / Simulation.pixelsPerMeter;
-
-      if (yellowStop == 1 && tLDistance <= 200) {
-
-        double yellowTime = road.getMaxSpeed(x) / 1.5;
-        double acc = speed / yellowTime;
-
-        if (!(acceleration < -acc)) {
-          acceleration = -acc;
-        }
-
-        if (tLDistance < 5) {
-          acceleration = -6;
-        }
-      }
-
-      if (trafficLight == Color.RED) {
-
-        if ((x + 2 * LENGTH) > road.getTrafficLights().getX()) {
-          acceleration = -6;
-        }
-      }
-    }
+//    if (road.getTrafficLights() != null && trafficLight != null) {
+//
+//      double tLDistance = (road.getTrafficLights().getX() - x) / Simulation.pixelsPerMeter;
+//
+//      if (yellowStop == 1 && tLDistance <= 200) {
+//
+//        double yellowTime = road.getMaxSpeed(x) / 1.5;
+//        double acc = speed / yellowTime;
+//
+//        if (!(acceleration < -acc)) {
+//          acceleration = -acc;
+//        }
+//
+//        if (tLDistance < 5) {
+//          acceleration = -6;
+//        }
+//      }
+//
+//      if (trafficLight == Color.RED) {
+//
+//        if ((x + 2 * LENGTH) > road.getTrafficLights().getX()) {
+//          acceleration = -6;
+//        }
+//      }
+//    }
 
     if (speed < 0) {
       speed = 0;
@@ -630,28 +630,28 @@ public class Car {
     }
   }
 
-  public void lookTrafficLights() {
-
-    TrafficLights tL = road.getTrafficLights();
-
-    if (tL != null && tL.getX() > x) {
-      trafficLight = tL.getLight();
-    } else {
-      trafficLight = null;
-      yellowStop = 0;
-    }
-
-    if (trafficLight == Color.YELLOW && yellowStop == 0) {
-
-      double yellowDistance = (road.getAverageSpeed() * 5 / 18) * 5;
-
-      if (x <= tL.getX() - yellowDistance * Simulation.pixelsPerMeter) {
-        yellowStop = 1;
-      } else yellowStop = -1;
-    }
-
-    if (trafficLight == Color.RED) yellowStop = 0;
-  }
+//  public void lookTrafficLights() {
+//
+//    TrafficLights tL = road.getTrafficLights();
+//
+//    if (tL != null && tL.getX() > x) {
+//      trafficLight = tL.getLight();
+//    } else {
+//      trafficLight = null;
+//      yellowStop = 0;
+//    }
+//
+//    if (trafficLight == Color.YELLOW && yellowStop == 0) {
+//
+//      double yellowDistance = (road.getAverageSpeed() * 5 / 18) * 5;
+//
+//      if (x <= tL.getX() - yellowDistance * Simulation.pixelsPerMeter) {
+//        yellowStop = 1;
+//      } else yellowStop = -1;
+//    }
+//
+//    if (trafficLight == Color.RED) yellowStop = 0;
+//  }
 
   public int getDestination() {
     return destination;

@@ -1,6 +1,7 @@
 package com.trafficsimulator;
 
 import java.awt.*;
+import java.util.*;
 
 public class RoadLane {
 
@@ -12,6 +13,8 @@ public class RoadLane {
   private final int number;
   private int side;
 
+  private final LinkedList<Car> cars;
+
   public RoadLane(int x, int y, int length, int number) {
 
     xStart = x;
@@ -20,6 +23,7 @@ public class RoadLane {
     this.length = length;
     this.number = number;
     side = 0;
+    cars = new LinkedList<>();
   }
 
   public int getXStart() {
@@ -48,5 +52,43 @@ public class RoadLane {
 
   public void setSide(int s) {
     side = s;
+  }
+
+  public synchronized Car getFrontCar(Car car) {
+    int next = cars.indexOf(car) + 1;
+    return cars.getLast() != car ? cars.get(next) : null;
+  }
+
+  public synchronized Car getBackCar(Car car) {
+    int previous = cars.indexOf(car) - 1;
+    return cars.getFirst() != car ? cars.get(previous) : null;
+  }
+
+  public synchronized Car getFirstCarFromX(double x) {
+    Iterator<Car> it = cars.iterator();
+    while (it.hasNext()) {
+      Car car = it.next();
+      if (car.getX() >= x)
+        return car;
+    }
+    return null;
+  }
+
+  public synchronized Car getLastCarBeforeX(double x) {
+    Iterator<Car> it = cars.descendingIterator();
+    while (it.hasNext()) {
+      Car car = it.next();
+      if (car.getX() < x)
+        return car;
+    }
+    return null;
+  }
+
+  public Car getFirstCar() {
+    return cars.getFirst();
+  }
+
+  public Car getLastCar() {
+    return cars.getLast();
   }
 }
